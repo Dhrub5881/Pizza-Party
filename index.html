@@ -364,8 +364,8 @@ const firebaseConfig = {
   projectId: "pizza-party-127d5",
   // ✅ FIX: Added missing required fields — get from Firebase console
   storageBucket: "pizza-party-127d5.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  messagingSenderId: "53306205270",
+  appId: "1:53306205270:web:f6e7c6742010aee94747f7"
 }
 firebase.initializeApp(firebaseConfig)
 const auth = firebase.auth()
@@ -400,22 +400,38 @@ const PROMOS = { 'PIZZA10':10, 'PARTY20':20, 'NEWUSER':15, 'DEHRADUN':12 }
 
 // ── MENU DATA ──
 const MENU = [
-  {id:1,name:'Margherita Classic',cat:'pizza',type:'veg',emoji:'🍕',price:199,oldPrice:249,desc:'Fresh tomato sauce, mozzarella, basil on hand-tossed base',bestseller:true},
-  {id:2,name:'Paneer Tikka Special',cat:'pizza',type:'veg',emoji:'🧀',price:299,oldPrice:349,desc:'Marinated paneer, bell peppers, onions, tikka sauce, cheese burst',bestseller:true},
-  {id:3,name:'Farm House',cat:'pizza',type:'veg',emoji:'🌽',price:279,oldPrice:329,desc:'Mushroom, capsicum, babycorn, paneer, golden corn, olives',bestseller:false},
-  {id:4,name:'Double Cheese',cat:'pizza',type:'veg',emoji:'🧀',price:259,oldPrice:299,desc:'Extra mozzarella, cheese burst crust, garlic drizzle',bestseller:false},
-  {id:5,name:'Veggie Supreme',cat:'pizza',type:'veg',emoji:'🥦',price:319,oldPrice:369,desc:'Garden fresh veggies, jalapeno, red paprika, tangy tomato sauce',bestseller:false},
-  {id:6,name:'Chicken BBQ',cat:'pizza',type:'nonveg',emoji:'🍗',price:349,oldPrice:399,desc:'Grilled chicken, BBQ sauce, caramelized onions, smoked paprika',bestseller:true},
-  {id:7,name:'Pepperoni Feast',cat:'pizza',type:'nonveg',emoji:'🥩',price:379,oldPrice:429,desc:'Premium pepperoni, extra cheese, Italian herbs, tomato base',bestseller:true},
-  {id:8,name:'Chicken Tikka',cat:'pizza',type:'nonveg',emoji:'🌶️',price:359,oldPrice:409,desc:'Spiced tikka chicken, paneer, onions, green chilies',bestseller:false},
-  {id:9,name:'Garlic Breadsticks',cat:'sides',type:'veg',emoji:'🥖',price:99,oldPrice:129,desc:'Soft breadsticks with garlic butter dip & marinara',bestseller:true},
-  {id:10,name:'Crispy Wings',cat:'sides',type:'nonveg',emoji:'🍗',price:179,oldPrice:219,desc:'8 pieces golden fried with buffalo or BBQ sauce',bestseller:false},
-  {id:11,name:'Loaded Fries',cat:'sides',type:'veg',emoji:'🍟',price:119,oldPrice:149,desc:'Crispy fries with cheese sauce, jalapenos, herbs',bestseller:false},
-  {id:12,name:'Pepsi',cat:'drinks',type:'veg',emoji:'🥤',price:49,oldPrice:59,desc:'Chilled Pepsi 500ml',bestseller:false},
-  {id:13,name:'Mango Smoothie',cat:'drinks',type:'veg',emoji:'🥭',price:89,oldPrice:119,desc:'Fresh mango with cream, chilled',bestseller:true},
-  {id:14,name:'Party Pack',cat:'combos',type:'veg',emoji:'🎉',price:599,oldPrice:799,desc:'2 Medium Pizzas + Garlic Bread + 2 Pepsi — Perfect for 2!',bestseller:true},
-  {id:15,name:'Family Feast',cat:'combos',type:'veg',emoji:'👨‍👩‍👧‍👦',price:999,oldPrice:1399,desc:'3 Large Pizzas + 2 Sides + 4 Drinks — Feeds 4-6 people',bestseller:false},
-]
+  // VEG PIZZAS
+  {id:1,name:'Margherita Classic',cat:'pizza',type:'veg',emoji:'🍕',sizes:[{label:'Small (7")',price:149,oldPrice:199},{label:'Medium (10")',price:199,oldPrice:249},{label:'Large (12")',price:279,oldPrice:349},{label:'XL (14")',price:349,oldPrice:429}],price:199,oldPrice:249,desc:'Fresh tomato sauce, mozzarella, basil leaves on hand-tossed base',bestseller:true,rating:4.5},
+  {id:2,name:'Paneer Tikka Special',cat:'pizza',type:'veg',emoji:'🧀',sizes:[{label:'Small (7")',price:199,oldPrice:259},{label:'Medium (10")',price:299,oldPrice:349},{label:'Large (12")',price:379,oldPrice:449},{label:'XL (14")',price:459,oldPrice:549}],price:299,oldPrice:349,desc:'Marinated paneer, bell peppers, onions, tikka sauce, cheese burst',bestseller:true,rating:4.7},
+  {id:3,name:'Farm House',cat:'pizza',type:'veg',emoji:'🌽',sizes:[{label:'Small (7")',price:179,oldPrice:229},{label:'Medium (10")',price:279,oldPrice:329},{label:'Large (12")',price:359,oldPrice:429},{label:'XL (14")',price:439,oldPrice:519}],price:279,oldPrice:329,desc:'Mushroom, capsicum, babycorn, paneer, golden corn, olives',bestseller:false,rating:4.3},
+  {id:4,name:'Double Cheese',cat:'pizza',type:'veg',emoji:'🧀',sizes:[{label:'Small (7")',price:159,oldPrice:199},{label:'Medium (10")',price:259,oldPrice:299},{label:'Large (12")',price:339,oldPrice:399},{label:'XL (14")',price:419,oldPrice:499}],price:259,oldPrice:299,desc:'Extra mozzarella, cheese burst crust, garlic drizzle',bestseller:false,rating:4.4},
+  {id:5,name:'Veggie Supreme',cat:'pizza',type:'veg',emoji:'🥦',sizes:[{label:'Small (7")',price:219,oldPrice:269},{label:'Medium (10")',price:319,oldPrice:369},{label:'Large (12")',price:399,oldPrice:469},{label:'XL (14")',price:479,oldPrice:559}],price:319,oldPrice:369,desc:'Garden fresh veggies, jalapeno, red paprika, tangy tomato sauce',bestseller:false,rating:4.2},
+  {id:20,name:'Cheese & Corn Delight',cat:'pizza',type:'veg',emoji:'🌽',sizes:[{label:'Small (7")',price:169,oldPrice:219},{label:'Medium (10")',price:269,oldPrice:319},{label:'Large (12")',price:349,oldPrice:419},{label:'XL (14")',price:429,oldPrice:509}],price:269,oldPrice:319,desc:'Sweet golden corn, mozzarella, tangy tomato base',bestseller:false,rating:4.1},
+  // NON-VEG PIZZAS
+  {id:6,name:'Chicken BBQ',cat:'pizza',type:'nonveg',emoji:'🍗',sizes:[{label:'Small (7")',price:249,oldPrice:299},{label:'Medium (10")',price:349,oldPrice:399},{label:'Large (12")',price:449,oldPrice:519},{label:'XL (14")',price:549,oldPrice:629}],price:349,oldPrice:399,desc:'Grilled chicken, BBQ sauce, caramelized onions, smoked paprika',bestseller:true,rating:4.8},
+  {id:7,name:'Pepperoni Feast',cat:'pizza',type:'nonveg',emoji:'🥩',sizes:[{label:'Small (7")',price:279,oldPrice:329},{label:'Medium (10")',price:379,oldPrice:429},{label:'Large (12")',price:479,oldPrice:549},{label:'XL (14")',price:579,oldPrice:659}],price:379,oldPrice:429,desc:'Premium pepperoni, extra cheese, Italian herbs, tomato base',bestseller:true,rating:4.9},
+  {id:8,name:'Chicken Tikka',cat:'pizza',type:'nonveg',emoji:'🌶️',sizes:[{label:'Small (7")',price:259,oldPrice:309},{label:'Medium (10")',price:359,oldPrice:409},{label:'Large (12")',price:459,oldPrice:529},{label:'XL (14")',price:559,oldPrice:639}],price:359,oldPrice:409,desc:'Spiced tikka chicken, paneer, onions, green chilies',bestseller:false,rating:4.6},
+  {id:21,name:'Mutton Keema Special',cat:'pizza',type:'nonveg',emoji:'🐑',sizes:[{label:'Small (7")',price:299,oldPrice:349},{label:'Medium (10")',price:399,oldPrice:459},{label:'Large (12")',price:499,oldPrice:579},{label:'XL (14")',price:599,oldPrice:689}],price:399,oldPrice:459,desc:'Spiced mutton keema, onions, green chilies, special masala sauce',bestseller:false,rating:4.5},
+  {id:22,name:'Double Chicken Loaded',cat:'pizza',type:'nonveg',emoji:'🍗',sizes:[{label:'Small (7")',price:279,oldPrice:339},{label:'Medium (10")',price:389,oldPrice:449},{label:'Large (12")',price:489,oldPrice:569},{label:'XL (14")',price:589,oldPrice:679}],price:389,oldPrice:449,desc:'Double chicken toppings, mozzarella, ranch drizzle',bestseller:false,rating:4.4},
+  // SIDES
+  {id:9,name:'Garlic Breadsticks',cat:'sides',type:'veg',emoji:'🥖',sizes:[{label:'4 pcs',price:79,oldPrice:99},{label:'8 pcs',price:99,oldPrice:129}],price:99,oldPrice:129,desc:'Soft breadsticks with garlic butter dip & marinara',bestseller:true,rating:4.5},
+  {id:10,name:'Crispy Wings',cat:'sides',type:'nonveg',emoji:'🍗',sizes:[{label:'4 pcs',price:99,oldPrice:129},{label:'8 pcs',price:179,oldPrice:219}],price:179,oldPrice:219,desc:'Golden fried with buffalo or BBQ sauce',bestseller:false,rating:4.4},
+  {id:11,name:'Caesar Salad',cat:'sides',type:'veg',emoji:'🥗',sizes:[{label:'Regular',price:139,oldPrice:169}],price:139,oldPrice:169,desc:'Romaine, croutons, parmesan, Caesar dressing',bestseller:false,rating:4.0},
+  {id:12,name:'Loaded Fries',cat:'sides',type:'veg',emoji:'🍟',sizes:[{label:'Regular',price:79,oldPrice:99},{label:'Large',price:119,oldPrice:149}],price:119,oldPrice:149,desc:'Crispy fries with cheese sauce, jalapenos, herbs',bestseller:false,rating:4.3},
+  {id:23,name:'Paneer Bites',cat:'sides',type:'veg',emoji:'🧀',sizes:[{label:'6 pcs',price:99,oldPrice:129},{label:'12 pcs',price:179,oldPrice:219}],price:99,oldPrice:129,desc:'Crispy fried paneer cubes with mint chutney dip',bestseller:false,rating:4.2},
+  {id:24,name:'Choco Lava Cake',cat:'sides',type:'veg',emoji:'🍫',sizes:[{label:'Single',price:79,oldPrice:99},{label:'Double',price:139,oldPrice:179}],price:79,oldPrice:99,desc:'Warm chocolate cake with gooey molten center',bestseller:true,rating:4.7},
+  // DRINKS
+  {id:13,name:'Pepsi',cat:'drinks',type:'veg',emoji:'🥤',sizes:[{label:'250ml',price:35,oldPrice:45},{label:'500ml',price:49,oldPrice:59},{label:'1.25L',price:89,oldPrice:109}],price:49,oldPrice:59,desc:'Chilled Pepsi',bestseller:false,rating:4.0},
+  {id:14,name:'Mango Smoothie',cat:'drinks',type:'veg',emoji:'🥭',sizes:[{label:'Regular (300ml)',price:89,oldPrice:119},{label:'Large (500ml)',price:129,oldPrice:159}],price:89,oldPrice:119,desc:'Fresh mango with cream, chilled',bestseller:true,rating:4.6},
+  {id:15,name:'Lemonade',cat:'drinks',type:'veg',emoji:'🍋',sizes:[{label:'Regular (300ml)',price:59,oldPrice:79},{label:'Large (500ml)',price:89,oldPrice:109}],price:69,oldPrice:89,desc:'Fresh squeezed with mint, served cold',bestseller:false,rating:4.4},
+  {id:25,name:'Cold Coffee',cat:'drinks',type:'veg',emoji:'☕',sizes:[{label:'Regular (300ml)',price:79,oldPrice:99},{label:'Large (500ml)',price:119,oldPrice:149}],price:79,oldPrice:99,desc:'Rich cold brew coffee with milk and ice cream',bestseller:false,rating:4.3},
+  {id:26,name:'Virgin Mojito',cat:'drinks',type:'veg',emoji:'🍹',sizes:[{label:'Regular (300ml)',price:79,oldPrice:99},{label:'Large (500ml)',price:119,oldPrice:149}],price:79,oldPrice:99,desc:'Mint, lime, soda — refreshing',bestseller:false,rating:4.5},
+  // COMBOS
+  {id:16,name:'Party Pack',cat:'combos',type:'veg',emoji:'🎉',sizes:[{label:'Standard',price:599,oldPrice:799}],price:599,oldPrice:799,desc:'2 Medium Pizzas + Garlic Bread + 2 Pepsi — Perfect for 2',bestseller:true,rating:4.8},
+  {id:17,name:'Family Feast',cat:'combos',type:'veg',emoji:'👨‍👩‍👧‍👦',sizes:[{label:'Standard',price:999,oldPrice:1399}],price:999,oldPrice:1399,desc:'3 Large Pizzas + 2 Sides + 4 Drinks — Feeds 4-6',bestseller:false,rating:4.7},
+  {id:27,name:'Student Meal',cat:'combos',type:'veg',emoji:'🎓',sizes:[{label:'Standard',price:299,oldPrice:399}],price:299,oldPrice:399,desc:'1 Medium Pizza + Garlic Bread + 1 Pepsi — Student deal!',bestseller:true,rating:4.6},
+  {id:28,name:'Non-Veg Party Pack',cat:'combos',type:'nonveg',emoji:'🍗',sizes:[{label:'Standard',price:799,oldPrice:999}],price:799,oldPrice:999,desc:'2 Medium Non-Veg Pizzas + Crispy Wings + 2 Pepsi',bestseller:false,rating:4.7},
+];
 
 const REVIEWS = [
   {name:'Rahul S.',avatar:'RS',stars:5,text:'Best pizza in Dehradun! The Pepperoni Feast is amazing. Delivery was super fast!',date:'2 days ago'},

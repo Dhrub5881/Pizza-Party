@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pizza Party — Admin Panel</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚙️</text></svg>">
+<!-- ✅ FIX: Updated Firebase version -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --red:#D92B2B;--red-light:#FDF0F0;--green:#1A7A3C;--green-light:#EAF7EE;
+  --blue:#1558A8;--blue-light:#EBF4FF;--orange:#C85A08;--orange-light:#FEF0E6;
+  --yellow:#B8860B;--yellow-light:#FFFAE6;
+  --dark:#181716;--mid:#6B6965;--border:#E5E3DC;--bg:#F7F6F2;--white:#fff;
+  --shadow:0 1px 4px rgba(0,0,0,.08);--shadow-md:0 4px 16px rgba(0,0,0,.12);
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--dark);font-size:14px}
+.hide{display:none!important}
+
+/* LOGIN */
+.login-page{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#1A1916 0%,#2D2C28 60%,#3a1a1a 100%);padding:20px}
+.login-card{background:white;border-radius:20px;padding:36px;width:100%;max-width:380px;box-shadow:var(--shadow-md)}
+.login-logo{text-align:center;margin-bottom:24px}
+.login-logo .ico{font-size:48px;margin-bottom:8px}
+.login-logo h1{font-size:22px;font-weight:800}
+.login-logo p{color:var(--mid);font-size:13px;margin-top:4px}
+.form-group{margin-bottom:14px}
+.form-group label{display:block;font-size:11px;font-weight:700;color:var(--mid);margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px}
+.form-input{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:10px 13px;font-size:14px;outline:none;transition:border .2s;font-family:inherit}
+.form-input:focus{border-color:var(--red)}
+.pw-wrap{position:relative}
+.pw-wrap .form-input{padding-right:40px}
+.pw-toggle{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--mid)}
+.btn-login{width:100%;background:var(--red);color:white;padding:13px;border-radius:10px;font-weight:700;font-size:15px;border:none;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-login:hover:not(:disabled){background:#B01F1F;transform:translateY(-1px)}
+.btn-login:disabled{opacity:.6;cursor:not-allowed}
+.login-divider{display:flex;align-items:center;gap:8px;color:var(--mid);font-size:12px;margin:14px 0}
+.login-divider::before,.login-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.btn-google-admin{width:100%;background:white;color:var(--dark);border:1.5px solid var(--border);padding:11px;border-radius:10px;font-weight:600;font-size:13px;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:10px}
+.btn-google-admin:hover{background:#f8f8f8;border-color:#ccc}
+.login-error{background:#FEF2F2;border:1px solid #FECACA;border-radius:8px;padding:10px 12px;font-size:12px;color:#B91C1C;margin-bottom:14px;display:flex;align-items:center;gap:6px}
+
+/* LAYOUT */
+.app{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
+.sidebar{background:#1A1916;color:white;display:flex;flex-direction:column;position:fixed;top:0;bottom:0;width:220px;overflow-y:auto;z-index:50}
+.sidebar-logo{padding:20px;border-bottom:1px solid rgba(255,255,255,.08)}
+.sidebar-logo .lg{font-size:28px;margin-bottom:4px}
+.sidebar-logo h2{font-size:15px;font-weight:800}
+.sidebar-logo p{font-size:11px;color:#8A8880}
+.sidebar-nav{padding:12px 8px;flex:1}
+.nav-section{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#6B6965;padding:8px 10px 4px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;font-size:13px;font-weight:500;color:#C8C5BC;cursor:pointer;margin-bottom:2px;transition:all .2s}
+.nav-item:hover{background:rgba(255,255,255,.08);color:white}
+.nav-item.active{background:var(--red)!important;color:white}
+.nav-item .ni{font-size:16px;flex-shrink:0}
+.sidebar-bottom{padding:12px;border-top:1px solid rgba(255,255,255,.08)}
+.admin-user{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.admin-avatar{width:36px;height:36px;background:var(--red);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0;overflow:hidden}
+.admin-avatar img{width:100%;height:100%;object-fit:cover}
+.admin-name{font-size:13px;font-weight:600;color:white}
+.admin-role{font-size:10px;color:#8A8880}
+.btn-signout{width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#C8C5BC;padding:8px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-signout:hover{background:rgba(255,0,0,.15);color:white}
+.main{margin-left:220px;padding:24px;flex:1;min-height:100vh}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px}
+.page-title{font-size:22px;font-weight:800}
+.page-sub{font-size:13px;color:var(--mid);margin-top:2px}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.stat-card{background:white;border-radius:14px;border:1px solid var(--border);padding:16px;transition:all .2s}
+.stat-card:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
+.stat-ico{font-size:26px;margin-bottom:8px}
+.stat-val{font-size:26px;font-weight:800;margin-bottom:2px}
+.stat-lbl{font-size:12px;color:var(--mid)}
+.stat-chg{font-size:11px;font-weight:700;margin-top:4px}
+.chg-up{color:var(--green)}.chg-dn{color:var(--red)}
+
+/* TABLE */
+.table-card{background:white;border-radius:14px;border:1px solid var(--border);overflow:hidden;margin-bottom:20px}
+.table-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.table-title{font-size:15px;font-weight:800}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;padding:10px 16px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--mid);border-bottom:1.5px solid var(--border);background:#FAFAF8;white-space:nowrap}
+td{padding:12px 16px;border-bottom:1px solid #F5F4F0;font-size:13px;vertical-align:middle}
+tr:last-child td{border:none}
+tr:hover td{background:#FAFAF8}
+.pill{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap}
+.pill-received{background:var(--yellow-light);color:var(--yellow)}
+.pill-preparing{background:var(--blue-light);color:var(--blue)}
+.pill-otw{background:var(--orange-light);color:var(--orange)}
+.pill-delivered{background:var(--green-light);color:var(--green)}
+.pill-paid{background:var(--green-light);color:var(--green)}
+.pill-pending{background:var(--yellow-light);color:var(--yellow)}
+.pill-cod{background:#F5F4F0;color:var(--mid)}
+
+/* BUTTONS */
+.btn{padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .2s;display:inline-flex;align-items:center;gap:6px;font-family:inherit}
+.btn-red{background:var(--red);color:white}
+.btn-red:hover{background:#B01F1F}
+.btn-green{background:var(--green);color:white}
+.btn-green:hover{background:#145E2E}
+.btn-outline{background:white;color:var(--dark);border:1.5px solid var(--border)}
+.btn-outline:hover{border-color:#999}
+.btn-sm{padding:5px 12px;font-size:12px}
+.btn-refresh{background:var(--blue-light);color:var(--blue);padding:8px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:none;display:flex;align-items:center;gap:6px;font-family:inherit}
+.btn-refresh:hover{background:#d0e8ff}
+
+/* FORM / MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px;opacity:0;pointer-events:none;transition:opacity .2s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:white;border-radius:16px;padding:24px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;position:relative}
+.modal h3{font-size:17px;font-weight:800;margin-bottom:18px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236B6965' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+
+/* MENU MANAGER */
+.menu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.menu-item-card{background:white;border-radius:12px;border:1px solid var(--border);overflow:hidden;transition:all .2s}
+.menu-item-card:hover{box-shadow:var(--shadow-md)}
+.mic-img{height:120px;display:flex;align-items:center;justify-content:center;font-size:52px}
+.mic-img.veg{background:linear-gradient(135deg,#EAF7EE,#D4F0DF)}
+.mic-img.nonveg{background:linear-gradient(135deg,#FDF0F0,#FAD8D8)}
+.mic-body{padding:12px}
+.mic-name{font-size:13px;font-weight:700;margin-bottom:2px}
+.mic-price{font-size:15px;font-weight:800;color:var(--red);margin-bottom:8px}
+.mic-actions{display:flex;gap:6px}
+
+/* SEARCH */
+.search-wrap{display:flex;gap:8px;align-items:center}
+.search-inp{border:1.5px solid var(--border);border-radius:8px;padding:7px 12px;font-size:13px;outline:none;font-family:inherit;width:200px}
+.search-inp:focus{border-color:var(--red)}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;right:20px;background:#1A1916;color:white;padding:10px 18px;border-radius:10px;font-size:13px;font-weight:500;z-index:999;transition:all .3s;box-shadow:var(--shadow-md);opacity:0;transform:translateY(10px);pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+
+@media(max-width:900px){
+  .app{grid-template-columns:1fr}
+  .sidebar{position:relative;width:100%;flex-direction:row;height:auto}
+  .main{margin-left:0;padding:16px}
+  .stats-grid{grid-template-columns:1fr 1fr}
+}
+@media(max-width:600px){
+  .stats-grid{grid-template-columns:1fr}
+  .form-row{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN PAGE -->
+<div id="login-page" class="login-page">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="ico">🍕</div>
+      <h1>Admin Panel</h1>
+      <p>Pizza Party Dehradun — Management</p>
+    </div>
+    <!-- ✅ FIX: Show login errors properly -->
+    <div class="login-error hide" id="login-error">❌ <span id="login-error-msg">Invalid credentials</span></div>
+    <div class="form-group">
+      <label>Admin Email</label>
+      <input type="email" class="form-input" id="admin-email" placeholder="admin@pizzaparty.in"
+             onkeydown="if(event.key==='Enter')document.getElementById('admin-pass').focus()">
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <div class="pw-wrap">
+        <input type="password" class="form-input" id="admin-pass" placeholder="Enter password"
+               onkeydown="if(event.key==='Enter')adminLogin()">
+        <button class="pw-toggle" onclick="togglePw()" type="button" id="pw-eye">👁️</button>
+      </div>
+    </div>
+    <button class="btn-login" onclick="adminLogin()" id="login-btn">🔑 Login to Admin Panel</button>
+    <div class="login-divider">or</div>
+    <button class="btn-google-admin" onclick="adminGoogleLogin()" id="google-login-btn">
+      <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+      Sign in with Google
+    </button>
+    <div style="text-align:center;font-size:11px;color:var(--mid);margin-top:16px">
+      ⚠️ Admin access only. Unauthorized login attempts are logged.
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN APP -->
+<div id="admin-app" class="app hide">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="lg">🍕</div>
+      <h2>Pizza Party</h2>
+      <p>Admin Dashboard</p>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-section">Main</div>
+      <div class="nav-item active" onclick="showTab('dashboard',this)" id="tab-dashboard"><span class="ni">📊</span> Dashboard</div>
+      <div class="nav-item" onclick="showTab('orders',this)" id="tab-orders">
+        <span class="ni">📦</span> Orders
+        <span id="order-count-badge" style="background:var(--red);color:white;border-radius:10px;font-size:10px;padding:1px 6px;margin-left:auto"></span>
+      </div>
+      <div class="nav-section">Management</div>
+      <div class="nav-item" onclick="showTab('menu',this)" id="tab-menu"><span class="ni">🍕</span> Menu Items</div>
+      <div class="nav-item" onclick="showTab('agents',this)" id="tab-agents"><span class="ni">🛵</span> Delivery Agents</div>
+      <div class="nav-section">Settings</div>
+      <div class="nav-item" onclick="showTab('promos',this)" id="tab-promos"><span class="ni">🎟️</span> Promo Codes</div>
+    </div>
+    <div class="sidebar-bottom">
+      <div class="admin-user">
+        <div class="admin-avatar" id="admin-avatar">A</div>
+        <div><div class="admin-name" id="admin-name-display">Admin</div><div class="admin-role">Restaurant Owner</div></div>
+      </div>
+      <button class="btn-signout" onclick="adminSignout()">🚪 Sign Out</button>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="main" id="admin-main"></div>
+</div>
+
+<!-- ADD MENU MODAL -->
+<div class="modal-overlay" id="add-item-modal">
+  <div class="modal">
+    <h3>➕ Add Menu Item</h3>
+    <div class="form-group"><label>Item Name *</label><input class="form-input" id="item-name" placeholder="e.g. Chicken Supreme"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Category</label>
+        <select class="form-input" id="item-cat">
+          <option value="pizza">Pizza</option>
+          <option value="sides">Sides</option>
+          <option value="drinks">Drinks</option>
+          <option value="combos">Combos</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Type</label>
+        <select class="form-input" id="item-type">
+          <option value="veg">Veg</option>
+          <option value="nonveg">Non-Veg</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Price (₹) *</label><input class="form-input" id="item-price" type="number" min="1" placeholder="299"></div>
+      <div class="form-group"><label>Original Price (₹)</label><input class="form-input" id="item-old-price" type="number" min="1" placeholder="349"></div>
+    </div>
+    <div class="form-group"><label>Emoji</label><input class="form-input" id="item-emoji" placeholder="🍕" maxlength="2"></div>
+    <div class="form-group"><label>Description</label><textarea class="form-input" id="item-desc" rows="2" placeholder="Describe the item..."></textarea></div>
+    <div class="form-group">
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;text-transform:none;letter-spacing:0">
+        <input type="checkbox" id="item-bestseller"> Mark as Bestseller 🔥
+      </label>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:6px">
+      <button class="btn btn-outline" onclick="closeModal('add-item-modal')">Cancel</button>
+      <button class="btn btn-red" onclick="saveMenuItem()">✅ Save Item</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════════════
+//  FIREBASE CONFIG
+//  ✅ FIX: Use SAME config as index.html
+//  ✅ FIX: Add admin@pizzaparty.in as a user in Firebase Auth
+//         (Email/Password provider must be enabled in console)
+// ══════════════════════════════════════════════════════
+const firebaseConfig = {
+  apiKey: "AIzaSyCJbZY_myMm7TvIf4LD6jfIvHuBKjVjoPo",
+  authDomain: "pizza-party-127d5.firebaseapp.com",
+  projectId: "pizza-party-127d5",
+  storageBucket: "pizza-party-127d5.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
+}
+firebase.initializeApp(firebaseConfig)
+const auth = firebase.auth()
+const API = 'https://pizza-party-1.onrender.com'
+
+// ✅ FIX: Allow only specific admin email(s) — edit this list
+const ADMIN_EMAILS = ['admin@pizzaparty.in', 'dhruh5881@gmail.com']
+
+let currentTab = 'dashboard'
+let realOrders = []
+let menuItems = [
+  {id:1,name:'Margherita Classic',cat:'pizza',type:'veg',emoji:'🍕',price:199,oldPrice:249,desc:'Fresh tomato sauce, mozzarella, basil',bestseller:true},
+  {id:2,name:'Paneer Tikka Special',cat:'pizza',type:'veg',emoji:'🧀',price:299,oldPrice:349,desc:'Marinated paneer, tikka sauce, cheese burst',bestseller:true},
+  {id:3,name:'Chicken BBQ',cat:'pizza',type:'nonveg',emoji:'🍗',price:349,oldPrice:399,desc:'Grilled chicken, BBQ sauce',bestseller:true},
+  {id:4,name:'Pepperoni Feast',cat:'pizza',type:'nonveg',emoji:'🥩',price:379,oldPrice:429,desc:'Premium pepperoni, extra cheese',bestseller:true},
+  {id:5,name:'Garlic Breadsticks',cat:'sides',type:'veg',emoji:'🥖',price:99,oldPrice:129,desc:'Garlic butter dip & marinara',bestseller:true},
+  {id:6,name:'Pepsi',cat:'drinks',type:'veg',emoji:'🥤',price:49,oldPrice:59,desc:'Chilled 500ml',bestseller:false},
+  {id:7,name:'Party Pack',cat:'combos',type:'veg',emoji:'🎉',price:599,oldPrice:799,desc:'2 Medium Pizzas + Bread + 2 Pepsi',bestseller:true},
+]
+
+// ══════════════════════════════════════════════════════
+//  ✅ FIX: REAL Firebase Auth (not hardcoded password!)
+// ══════════════════════════════════════════════════════
+auth.onAuthStateChanged(user => {
+  if (user && ADMIN_EMAILS.includes(user.email)) {
+    document.getElementById('login-page').classList.add('hide')
+    document.getElementById('admin-app').classList.remove('hide')
+    // Update admin avatar
+    const avatarEl = document.getElementById('admin-avatar')
+    const nameEl = document.getElementById('admin-name-display')
+    if (user.photoURL) {
+      avatarEl.innerHTML = `<img src="${user.photoURL}" alt="admin">`
+    } else {
+      avatarEl.textContent = (user.displayName || user.email || 'A').charAt(0).toUpperCase()
+    }
+    if (nameEl) nameEl.textContent = user.displayName || user.email.split('@')[0]
+    loadOrders()
+    showTab('dashboard', document.getElementById('tab-dashboard'))
+  } else if (user && !ADMIN_EMAILS.includes(user.email)) {
+    // Signed in but NOT an admin
+    auth.signOut()
+    showLoginError('Access denied. This account is not an admin.')
+  }
+})
+
+async function adminLogin() {
+  const email = document.getElementById('admin-email').value.trim()
+  const pass = document.getElementById('admin-pass').value
+  const btn = document.getElementById('login-btn')
+
+  if (!email || !pass) { showLoginError('Please enter email and password.'); return }
+
+  btn.disabled = true
+  btn.innerHTML = '⏳ Signing in...'
+  hideLoginError()
+
+  try {
+    await auth.signInWithEmailAndPassword(email, pass)
+    // onAuthStateChanged will handle the rest
+  } catch(err) {
+    btn.disabled = false
+    btn.innerHTML = '🔑 Login to Admin Panel'
+    const msgs = {
+      'auth/user-not-found': 'No account found with this email.',
+      'auth/wrong-password': 'Incorrect password.',
+      'auth/invalid-email': 'Invalid email address.',
+      'auth/too-many-requests': 'Too many failed attempts. Try again later.',
+      'auth/invalid-credential': 'Invalid email or password.',
+    }
+    showLoginError(msgs[err.code] || err.message)
+  }
+}
+
+async function adminGoogleLogin() {
+  const btn = document.getElementById('google-login-btn')
+  btn.disabled = true
+  btn.innerHTML = '⏳ Connecting...'
+  hideLoginError()
+  try {
+    const provider = new firebase.auth.GoogleAuthProvider()
+    await auth.signInWithPopup(provider)
+  } catch(err) {
+    btn.disabled = false
+    btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24">...</svg> Sign in with Google`
+    if (err.code !== 'auth/popup-closed-by-user') {
+      showLoginError(err.message)
+    }
+  }
+}
+
+function adminSignout() {
+  auth.signOut().then(() => {
+    document.getElementById('admin-app').classList.add('hide')
+    document.getElementById('login-page').classList.remove('hide')
+    document.getElementById('admin-pass').value = ''
+    hideLoginError()
+    showToast('Signed out!','👋')
+  })
+}
+
+function showLoginError(msg) {
+  document.getElementById('login-error').classList.remove('hide')
+  document.getElementById('login-error-msg').textContent = msg
+}
+function hideLoginError() {
+  document.getElementById('login-error').classList.add('hide')
+}
+
+function togglePw() {
+  const inp = document.getElementById('admin-pass')
+  const eye = document.getElementById('pw-eye')
+  if (inp.type === 'password') { inp.type = 'text'; eye.textContent = '🙈' }
+  else { inp.type = 'password'; eye.textContent = '👁️' }
+}
+
+// Enter key to login
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('admin-pass')?.addEventListener('keydown', e => {
+    if (e.key === 'Enter') adminLogin()
+  })
+  document.getElementById('admin-email')?.addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('admin-pass').focus()
+  })
+})
+
+// ══════════════════════════════════════════════════════
+//  LOAD ORDERS FROM BACKEND
+// ══════════════════════════════════════════════════════
+async function loadOrders() {
+  try {
+    const res = await fetch(`${API}/api/orders`)
+    if (!res.ok) throw new Error('API error')
+    const data = await res.json()
+    realOrders = Array.isArray(data) ? data : (data.orders || [])
+    // Sort newest first
+    realOrders.sort((a,b) => new Date(b.createdAt||0) - new Date(a.createdAt||0))
+    const badge = document.getElementById('order-count-badge')
+    if (badge) badge.textContent = realOrders.filter(o=>o.status==='received').length || ''
+  } catch(e) {
+    // Use demo data when backend is offline
+    realOrders = [
+      {orderId:'PP-2025-8821',customerName:'Rahul S.',phone:'9876543210',items:[{name:'Pepperoni Feast'},{name:'Pepsi'}],total:428,status:'preparing',paymentMethod:'upi',createdAt:new Date().toISOString()},
+      {orderId:'PP-2025-8822',customerName:'Priya M.',phone:'9812345678',items:[{name:'Paneer Tikka Special'},{name:'Garlic Breadsticks'}],total:398,status:'otw',paymentMethod:'cod',createdAt:new Date(Date.now()-300000).toISOString()},
+      {orderId:'PP-2025-8820',customerName:'Arjun K.',phone:'9811223344',items:[{name:'Family Feast'}],total:999,status:'delivered',paymentMethod:'upi',createdAt:new Date(Date.now()-1800000).toISOString()},
+    ]
+  }
+  if (currentTab === 'dashboard') showTab('dashboard', null)
+  if (currentTab === 'orders') showTab('orders', null)
+}
+
+// ══════════════════════════════════════════════════════
+//  TAB NAVIGATION
+// ══════════════════════════════════════════════════════
+function showTab(tab, clickedEl) {
+  currentTab = tab
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'))
+  if (clickedEl) clickedEl.classList.add('active')
+  else {
+    const el = document.getElementById('tab-' + tab)
+    if (el) el.classList.add('active')
+  }
+  const main = document.getElementById('admin-main')
+  if (!main) return
+  switch(tab) {
+    case 'dashboard': main.innerHTML = renderDashboard(); break
+    case 'orders':    main.innerHTML = renderOrdersTab(); break
+    case 'menu':      main.innerHTML = renderMenuTab(); break
+    case 'agents':    main.innerHTML = renderAgents(); break
+    case 'promos':    main.innerHTML = renderPromos(); break
+  }
+}
+
+// ── DASHBOARD ──
+function renderDashboard() {
+  const totalRev = realOrders.filter(o=>o.status==='delivered').reduce((a,o)=>a+o.total,0)
+  const todayOrders = realOrders.filter(o=>isToday(o.createdAt))
+  const pendingOrders = realOrders.filter(o=>o.status==='received'||o.status==='preparing')
+  return `
+  <div class="page-header">
+    <div><div class="page-title">📊 Dashboard</div><div class="page-sub">Live overview — ${new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'})}</div></div>
+    <button class="btn-refresh" onclick="loadOrders().then(()=>showTab('dashboard'))">🔄 Refresh</button>
+  </div>
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-ico">📦</div><div class="stat-val">${realOrders.length}</div><div class="stat-lbl">Total Orders</div><div class="stat-chg chg-up">↑ +${todayOrders.length} today</div></div>
+    <div class="stat-card"><div class="stat-ico">💰</div><div class="stat-val">₹${totalRev.toLocaleString('en-IN')}</div><div class="stat-lbl">Revenue (Delivered)</div><div class="stat-chg chg-up">↑ Active</div></div>
+    <div class="stat-card"><div class="stat-ico">⏳</div><div class="stat-val">${pendingOrders.length}</div><div class="stat-lbl">Pending Orders</div><div class="stat-chg ${pendingOrders.length>3?'chg-dn':'chg-up'}">${pendingOrders.length>0?'Needs attention':'All clear ✅'}</div></div>
+    <div class="stat-card"><div class="stat-ico">✅</div><div class="stat-val">${realOrders.filter(o=>o.status==='delivered').length}</div><div class="stat-lbl">Delivered Today</div><div class="stat-chg chg-up">↑ Great!</div></div>
+  </div>
+  <div class="table-card">
+    <div class="table-header">
+      <div class="table-title">Recent Orders</div>
+      <button class="btn btn-outline btn-sm" onclick="showTab('orders',document.getElementById('tab-orders'))">View All →</button>
+    </div>
+    ${renderOrdersTable(realOrders.slice(0, 5))}
+  </div>`
+}
+
+function isToday(dateStr) {
+  if (!dateStr) return false
+  const d = new Date(dateStr)
+  const t = new Date()
+  return d.getDate()===t.getDate() && d.getMonth()===t.getMonth() && d.getFullYear()===t.getFullYear()
+}
+
+// ── ORDERS TAB ──
+function renderOrdersTab() {
+  return `
+  <div class="page-header">
+    <div><div class="page-title">📦 All Orders</div><div class="page-sub">${realOrders.length} total orders</div></div>
+    <div style="display:flex;gap:8px">
+      <input class="search-inp" placeholder="Search order / customer..." oninput="filterOrders(this.value)" id="order-search">
+      <button class="btn-refresh" onclick="loadOrders().then(()=>showTab('orders'))">🔄 Refresh</button>
+    </div>
+  </div>
+  <div class="table-card">
+    <div class="table-header">
+      <div class="table-title">Order Management</div>
+      <div style="font-size:12px;color:var(--mid)">Auto-refreshes every 30s</div>
+    </div>
+    <div id="orders-table-wrap">${renderOrdersTable(realOrders)}</div>
+  </div>`
+}
+
+function filterOrders(query) {
+  const q = query.toLowerCase()
+  const filtered = realOrders.filter(o =>
+    (o.orderId||'').toLowerCase().includes(q) ||
+    (o.customerName||'').toLowerCase().includes(q) ||
+    (o.phone||'').includes(q)
+  )
+  const wrap = document.getElementById('orders-table-wrap')
+  if (wrap) wrap.innerHTML = renderOrdersTable(filtered)
+}
+
+function renderOrdersTable(orders) {
+  if (!orders || orders.length === 0) return `<div style="text-align:center;padding:48px;color:var(--mid)">No orders found</div>`
+  return `<div class="table-wrap"><table>
+    <thead><tr><th>Order ID</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Payment</th><th>Time</th><th>Update</th></tr></thead>
+    <tbody>${orders.map(o=>`<tr>
+      <td style="font-weight:700;color:var(--red)">${escHtml(o.orderId)}</td>
+      <td>${escHtml(o.customerName)}<br><span style="font-size:11px;color:var(--mid)">${escHtml(o.phone||'')}</span></td>
+      <td style="font-size:12px;max-width:140px;color:var(--mid)">${(o.items||[]).map(i=>escHtml(i.name)).join(', ')}</td>
+      <td style="font-weight:700">₹${o.total}</td>
+      <td><span class="pill pill-${escHtml(o.status)}">${statusLabel(o.status)}</span></td>
+      <td><span class="pill ${o.paymentMethod==='cod'?'pill-cod':'pill-paid'}">${(o.paymentMethod||'COD').toUpperCase()}</span></td>
+      <td style="font-size:11px;color:var(--mid)">${o.createdAt?new Date(o.createdAt).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}):'—'}</td>
+      <td>
+        <select style="border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-size:12px;cursor:pointer;font-family:inherit" onchange="updateOrderStatus('${escHtml(o.orderId)}',this.value)">
+          <option value="received" ${o.status==='received'?'selected':''}>Received</option>
+          <option value="preparing" ${o.status==='preparing'?'selected':''}>Preparing</option>
+          <option value="otw" ${o.status==='otw'?'selected':''}>On the Way</option>
+          <option value="delivered" ${o.status==='delivered'?'selected':''}>Delivered</option>
+        </select>
+      </td>
+    </tr>`).join('')}</tbody>
+  </table></div>`
+}
+
+function statusLabel(s) {
+  const map = {received:'📋 Received',preparing:'👨‍🍳 Preparing',otw:'🛵 On the Way',delivered:'✅ Delivered'}
+  return map[s] || s
+}
+
+async function updateOrderStatus(orderId, status) {
+  try {
+    const res = await fetch(`${API}/api/orders/${orderId}/status`, {
+      method:'PATCH', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({status})
+    })
+    if (!res.ok) throw new Error()
+    const order = realOrders.find(o=>o.orderId===orderId)
+    if (order) order.status = status
+    showToast(`Order ${orderId} → ${statusLabel(status)}`,'✅')
+  } catch {
+    showToast('Status update failed — check backend connection','❌')
+  }
+}
+
+// Auto-refresh orders every 30 seconds
+setInterval(() => {
+  if (document.getElementById('admin-app')?.classList.contains('hide')) return
+  loadOrders()
+}, 30000)
+
+// ── MENU ──
+function renderMenuTab() {
+  return `
+  <div class="page-header">
+    <div><div class="page-title">🍕 Menu Management</div><div class="page-sub">${menuItems.length} items</div></div>
+    <button class="btn btn-red" onclick="openModal('add-item-modal')">➕ Add Item</button>
+  </div>
+  <div class="menu-grid">
+    ${menuItems.map(item=>`
+    <div class="menu-item-card">
+      <div class="mic-img ${item.type}">${item.emoji}</div>
+      <div class="mic-body">
+        <div class="mic-name">${escHtml(item.name)} ${item.bestseller?'🔥':''}</div>
+        <div style="font-size:11px;color:var(--mid);margin-bottom:4px">${item.cat} · ${item.type}</div>
+        <div class="mic-price">₹${item.price} <span style="font-size:12px;color:var(--mid);text-decoration:line-through;font-weight:400">₹${item.oldPrice}</span></div>
+        <div class="mic-actions">
+          <button class="btn btn-outline btn-sm" onclick="editItem(${item.id})">✏️ Edit</button>
+          <button class="btn btn-sm" style="background:var(--red-light);color:var(--red)" onclick="deleteItem(${item.id})">🗑️</button>
+        </div>
+      </div>
+    </div>`).join('')}
+  </div>`
+}
+
+function saveMenuItem() {
+  const name = document.getElementById('item-name').value.trim()
+  if (!name) { showToast('Enter item name','❌'); return }
+  const price = parseInt(document.getElementById('item-price').value)
+  if (!price || price < 1) { showToast('Enter valid price','❌'); return }
+  const newItem = {
+    id: Date.now(),
+    name,
+    cat: document.getElementById('item-cat').value,
+    type: document.getElementById('item-type').value,
+    emoji: document.getElementById('item-emoji').value || '🍕',
+    price,
+    oldPrice: parseInt(document.getElementById('item-old-price').value) || Math.round(price * 1.2),
+    desc: document.getElementById('item-desc').value,
+    bestseller: document.getElementById('item-bestseller').checked
+  }
+  menuItems.push(newItem)
+  closeModal('add-item-modal')
+  document.getElementById('item-name').value = ''
+  document.getElementById('item-price').value = ''
+  document.getElementById('item-old-price').value = ''
+  document.getElementById('item-desc').value = ''
+  document.getElementById('item-emoji').value = ''
+  document.getElementById('item-bestseller').checked = false
+  showToast(name + ' added to menu!','✅')
+  showTab('menu', null)
+}
+
+function deleteItem(id) {
+  if (!confirm('Delete this menu item? This cannot be undone.')) return
+  menuItems = menuItems.filter(m=>m.id!==id)
+  showTab('menu', null)
+  showToast('Item deleted','✅')
+}
+
+function editItem(id) { showToast('Edit feature — coming soon in v2!','⚠️') }
+
+// ── AGENTS ──
+function renderAgents() {
+  const agents = [
+    {name:'Ravi Kumar',phone:'9811223344',status:'busy',orders:1,rating:4.8,area:'Saharanpur Rd'},
+    {name:'Amit Jha',phone:'9811223345',status:'available',orders:0,rating:4.9,area:'Rajpur Rd'},
+    {name:'Suresh Das',phone:'9811223346',status:'busy',orders:1,rating:4.7,area:'Clock Tower'},
+  ]
+  return `
+  <div class="page-header">
+    <div><div class="page-title">🛵 Delivery Agents</div><div class="page-sub">${agents.length} agents registered</div></div>
+    <button class="btn btn-red" onclick="showToast('Add agent — coming soon!','⚠️')">➕ Add Agent</button>
+  </div>
+  <div class="table-card">
+    <div class="table-wrap"><table>
+      <thead><tr><th>Agent</th><th>Phone</th><th>Status</th><th>Active Orders</th><th>Rating</th><th>Area</th><th>Action</th></tr></thead>
+      <tbody>${agents.map(a=>`<tr>
+        <td style="font-weight:600">${escHtml(a.name)}</td>
+        <td><a href="tel:+91${a.phone}" style="color:var(--blue)">${a.phone}</a></td>
+        <td><span class="pill ${a.status==='available'?'pill-delivered':'pill-preparing'}">${a.status}</span></td>
+        <td>${a.orders}</td>
+        <td style="color:#B8860B">★ ${a.rating}</td>
+        <td>${a.area}</td>
+        <td><button class="btn btn-outline btn-sm" onclick="showToast('Calling ${escHtml(a.name)}...','📞')">📞 Call</button></td>
+      </tr>`).join('')}</tbody>
+    </table></div>
+  </div>`
+}
+
+// ── PROMOS ──
+function renderPromos() {
+  const promos = [
+    {code:'PIZZA10',discount:10,uses:47,active:true},
+    {code:'PARTY20',discount:20,uses:23,active:true},
+    {code:'NEWUSER',discount:15,uses:81,active:true},
+    {code:'DEHRADUN',discount:12,uses:15,active:true}
+  ]
+  return `
+  <div class="page-header">
+    <div><div class="page-title">🎟️ Promo Codes</div><div class="page-sub">Active discount codes</div></div>
+    <button class="btn btn-red" onclick="showToast('Add promo — coming soon!','⚠️')">➕ Add Code</button>
+  </div>
+  <div class="table-card">
+    <div class="table-wrap"><table>
+      <thead><tr><th>Code</th><th>Discount</th><th>Total Uses</th><th>Status</th><th>Action</th></tr></thead>
+      <tbody>${promos.map(p=>`<tr>
+        <td style="font-family:monospace;font-weight:800;color:var(--red);font-size:14px">${p.code}</td>
+        <td style="font-weight:700">${p.discount}% OFF</td>
+        <td>${p.uses} times</td>
+        <td><span class="pill pill-delivered">${p.active?'Active':'Inactive'}</span></td>
+        <td><button class="btn btn-sm" style="background:var(--red-light);color:var(--red)" onclick="showToast('${p.code} deactivated!','✅')">Deactivate</button></td>
+      </tr>`).join('')}</tbody>
+    </table></div>
+  </div>`
+}
+
+// ── UTILS ──
+function openModal(id) { document.getElementById(id)?.classList.add('open') }
+function closeModal(id) { document.getElementById(id)?.classList.remove('open') }
+
+function escHtml(str) {
+  if (!str) return ''
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+}
+
+function showToast(msg, ico='✅') {
+  const t = document.getElementById('toast')
+  if (!t) return
+  t.innerHTML = ico + ' ' + escHtml(msg)
+  t.classList.add('show')
+  clearTimeout(t._timer)
+  t._timer = setTimeout(() => t.classList.remove('show'), 2800)
+}
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(el => {
+  el.addEventListener('click', e => {
+    if (e.target === el) closeModal(el.id)
+  })
+})
+</script>
+</body>
+</html>

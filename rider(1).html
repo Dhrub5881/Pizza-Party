@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pizza Party — Rider App</title>
+<meta name="theme-color" content="#D92B2B">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛵</text></svg>">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --red:#D92B2B;--red-dark:#B01F1F;--red-light:#FDF0F0;
+  --green:#1A7A3C;--green-light:#EAF7EE;
+  --blue:#1558A8;--blue-light:#EBF4FF;
+  --orange:#C85A08;--orange-light:#FEF0E6;
+  --dark:#181716;--mid:#6B6965;--border:#E5E3DC;--bg:#F7F6F2;--white:#fff;
+  --shadow:0 2px 8px rgba(0,0,0,.1);--shadow-md:0 4px 20px rgba(0,0,0,.15);
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--dark);font-size:14px;max-width:420px;margin:0 auto;min-height:100vh}
+.hide{display:none!important}
+
+/* LOGIN */
+.login-screen{min-height:100vh;background:linear-gradient(180deg,#1A1916 0%,#2D2C28 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px}
+.login-logo{text-align:center;margin-bottom:32px;color:white}
+.login-logo .ico{font-size:64px;margin-bottom:12px;animation:bounce .8s ease infinite alternate}
+@keyframes bounce{from{transform:translateY(0)}to{transform:translateY(-8px)}}
+.login-logo h1{font-size:28px;font-weight:800;margin-bottom:4px}
+.login-logo p{color:#A09E98;font-size:14px}
+.login-card{background:white;border-radius:20px;padding:24px;width:100%;max-width:360px;box-shadow:var(--shadow-md)}
+.login-card h2{font-size:18px;font-weight:800;margin-bottom:16px;color:var(--dark)}
+.form-group{margin-bottom:12px}
+.form-group label{display:block;font-size:11px;font-weight:700;color:var(--mid);margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px}
+.form-input{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:11px 13px;font-size:14px;outline:none;transition:border .2s;font-family:inherit}
+.form-input:focus{border-color:var(--red)}
+.btn-login{width:100%;background:var(--red);color:white;padding:14px;border-radius:12px;font-weight:700;font-size:15px;border:none;cursor:pointer;margin-top:4px;transition:all .2s}
+.btn-login:hover{background:var(--red-dark)}
+.login-note{text-align:center;font-size:12px;color:var(--mid);margin-top:12px}
+
+/* HEADER */
+.app-header{background:var(--red);color:white;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.header-left{display:flex;align-items:center;gap:10px}
+.rider-avatar{width:36px;height:36px;background:rgba(255,255,255,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px}
+.rider-info h3{font-size:14px;font-weight:700;line-height:1.2}
+.rider-info p{font-size:11px;opacity:.8}
+.status-toggle{background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.3);border-radius:20px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;color:white;transition:all .2s}
+.status-toggle.online{background:#1A7A3C;border-color:#1A7A3C}
+
+/* BOTTOM NAV */
+.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:420px;background:white;border-top:1px solid var(--border);display:flex;z-index:50;box-shadow:0 -4px 16px rgba(0,0,0,.08)}
+.bn-item{flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 8px;cursor:pointer;transition:all .2s;font-size:10px;font-weight:600;color:var(--mid)}
+.bn-item.active{color:var(--red)}
+.bn-item .ico{font-size:22px;margin-bottom:3px;position:relative}
+.bn-badge{position:absolute;top:-4px;right:-8px;background:var(--red);color:white;border-radius:10px;font-size:9px;font-weight:700;padding:1px 5px;min-width:16px;text-align:center}
+.main-content{padding:16px;padding-bottom:80px}
+
+/* CARDS */
+.card{background:white;border-radius:14px;border:1px solid var(--border);overflow:hidden;margin-bottom:12px;box-shadow:var(--shadow)}
+.card-head{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-head h3{font-size:15px;font-weight:800}
+.card-body{padding:14px 16px}
+
+/* ORDER CARD */
+.order-card{background:white;border-radius:14px;border:1px solid var(--border);padding:16px;margin-bottom:12px;transition:all .2s;box-shadow:var(--shadow)}
+.order-card:hover{box-shadow:var(--shadow-md)}
+.order-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.order-id{font-size:16px;font-weight:800;color:var(--red)}
+.order-status{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700}
+.os-new{background:#FEF0E6;color:var(--orange)}
+.os-accepted{background:var(--blue-light);color:var(--blue)}
+.os-picked{background:var(--orange-light);color:var(--orange)}
+.os-delivered{background:var(--green-light);color:var(--green)}
+.order-customer{display:flex;align-items:center;gap:10px;margin-bottom:10px;padding:10px;background:var(--bg);border-radius:10px}
+.customer-avatar{width:38px;height:38px;background:var(--red-light);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.customer-name{font-weight:700;font-size:14px}
+.customer-addr{font-size:12px;color:var(--mid);margin-top:2px}
+.order-items{font-size:12px;color:var(--mid);margin-bottom:12px;line-height:1.6}
+.order-amount{font-size:18px;font-weight:800;color:var(--green)}
+.order-actions{display:flex;gap:8px}
+.btn{padding:10px 16px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;border:none;transition:all .2s;flex:1;display:flex;align-items:center;justify-content:center;gap:6px}
+.btn-accept{background:var(--green);color:white}
+.btn-accept:hover{background:#145E2E}
+.btn-call{background:var(--blue-light);color:var(--blue)}
+.btn-call:hover{background:var(--blue);color:white}
+.btn-nav{background:var(--orange-light);color:var(--orange)}
+.btn-nav:hover{background:var(--orange);color:white}
+.btn-delivered{background:var(--green);color:white;width:100%;padding:14px;font-size:15px}
+.btn-delivered:hover{background:#145E2E}
+.btn-secondary{background:var(--bg);color:var(--dark);border:1.5px solid var(--border)}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.stat-box{background:white;border-radius:12px;border:1px solid var(--border);padding:14px;text-align:center}
+.stat-box .sv{font-size:22px;font-weight:800;color:var(--red)}
+.stat-box .sl{font-size:11px;color:var(--mid);margin-top:3px}
+
+/* EARNINGS */
+.earn-card{background:linear-gradient(135deg,var(--green),#145E2E);border-radius:14px;padding:20px;color:white;margin-bottom:12px}
+.earn-label{font-size:12px;opacity:.8;margin-bottom:4px}
+.earn-amount{font-size:32px;font-weight:800;margin-bottom:16px}
+.earn-row{display:flex;justify-content:space-between;margin-bottom:8px;font-size:13px;opacity:.9}
+
+/* GPS STATUS */
+.gps-bar{background:var(--blue-light);border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px;margin-bottom:12px;font-size:13px;color:var(--blue)}
+.gps-dot{width:8px;height:8px;background:var(--blue);border-radius:50%;animation:blink 1s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* EMPTY */
+.empty-state{text-align:center;padding:48px 20px;color:var(--mid)}
+.empty-state .ico{font-size:48px;margin-bottom:12px}
+.empty-state h3{font-size:16px;font-weight:700;color:var(--dark);margin-bottom:6px}
+
+/* TOAST */
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:#1A1916;color:white;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:500;z-index:999;transition:all .3s;opacity:0;white-space:nowrap;box-shadow:var(--shadow-md)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen" class="login-screen">
+  <div class="login-logo">
+    <div class="ico">🛵</div>
+    <h1>Rider App</h1>
+    <p>Pizza Party Dehradun</p>
+  </div>
+  <div class="login-card">
+    <h2>🔑 Rider Login</h2>
+    <div class="form-group">
+      <label>Phone Number</label>
+      <div style="display:flex;border:1.5px solid var(--border);border-radius:10px;overflow:hidden;transition:border .2s" id="phone-wrap">
+        <span style="padding:11px 12px;background:var(--bg);border-right:1px solid var(--border);font-size:13px;color:var(--mid)">🇮🇳 +91</span>
+        <input type="tel" class="form-input" id="rider-phone" placeholder="10-digit number" maxlength="10" style="border:none;border-radius:0" onfocus="document.getElementById('phone-wrap').style.borderColor='var(--red)'" onblur="document.getElementById('phone-wrap').style.borderColor='var(--border)'">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>PIN</label>
+      <input type="password" class="form-input" id="rider-pin" placeholder="4-digit PIN" maxlength="4">
+    </div>
+    <button class="btn-login" onclick="riderLogin()">Login →</button>
+    <div class="login-note">Demo: phone <strong>9811223344</strong>, PIN <strong>1234</strong></div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="rider-app" class="hide">
+  <div class="app-header">
+    <div class="header-left">
+      <div class="rider-avatar">🛵</div>
+      <div class="rider-info">
+        <h3 id="rider-name-display">Ravi Kumar</h3>
+        <p id="rider-area">Saharanpur Rd · Dehradun</p>
+      </div>
+    </div>
+    <button class="status-toggle" id="status-toggle" onclick="toggleOnlineStatus()">🔴 Offline</button>
+  </div>
+
+  <div class="main-content" id="main-content">
+    <!-- Rendered by JS -->
+  </div>
+
+  <div class="bottom-nav">
+    <div class="bn-item active" id="bn-orders" onclick="switchTab('orders')">
+      <div class="ico">📦<span class="bn-badge hide" id="new-orders-badge">0</span></div>
+      <span>Orders</span>
+    </div>
+    <div class="bn-item" id="bn-active" onclick="switchTab('active')">
+      <div class="ico">🛵</div>
+      <span>Active</span>
+    </div>
+    <div class="bn-item" id="bn-earnings" onclick="switchTab('earnings')">
+      <div class="ico">💰</div>
+      <span>Earnings</span>
+    </div>
+    <div class="bn-item" id="bn-profile" onclick="switchTab('profile')">
+      <div class="ico">👤</div>
+      <span>Profile</span>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'https://pizza-party-1.onrender.com'
+let riderState = {
+  isOnline: false,
+  tab: 'orders',
+  activeOrder: null,
+  allOrders: [],
+  rider: null,
+  locationInterval: null
+}
+
+const RIDERS = {
+  '9811223344': {name:'Ravi Kumar', pin:'1234', area:'Saharanpur Rd', earnings:{today:850,week:4200,total:28000}},
+  '9811223345': {name:'Amit Jha', pin:'5678', area:'Rajpur Rd', earnings:{today:720,week:3800,total:22000}},
+  '9811223346': {name:'Suresh Das', pin:'9012', area:'Clock Tower', earnings:{today:910,week:4800,total:31000}},
+}
+
+function riderLogin() {
+  const phone = document.getElementById('rider-phone').value.trim()
+  const pin = document.getElementById('rider-pin').value.trim()
+  const rider = RIDERS[phone]
+  if (rider && rider.pin === pin) {
+    riderState.rider = {...rider, phone}
+    document.getElementById('login-screen').classList.add('hide')
+    document.getElementById('rider-app').classList.remove('hide')
+    document.getElementById('rider-name-display').textContent = rider.name
+    document.getElementById('rider-area').textContent = rider.area + ' · Dehradun'
+    loadOrders()
+    switchTab('orders')
+    showToast('Welcome, ' + rider.name + '! 👋','✅')
+  } else {
+    showToast('Wrong phone or PIN!','❌')
+  }
+}
+
+document.getElementById('rider-pin').addEventListener('keypress', e => { if(e.key==='Enter') riderLogin() })
+
+function toggleOnlineStatus() {
+  riderState.isOnline = !riderState.isOnline
+  const btn = document.getElementById('status-toggle')
+  if (riderState.isOnline) {
+    btn.textContent = '🟢 Online'
+    btn.classList.add('online')
+    startGPS()
+    showToast('You are now online! Ready to deliver 🛵','✅')
+  } else {
+    btn.textContent = '🔴 Offline'
+    btn.classList.remove('online')
+    stopGPS()
+    showToast('You are now offline','⚠️')
+  }
+}
+
+async function loadOrders() {
+  try {
+    const res = await fetch(`${API}/api/orders`)
+    riderState.allOrders = await res.json()
+    const newOnes = riderState.allOrders.filter(o=>o.status==='received').length
+    const badge = document.getElementById('new-orders-badge')
+    if (newOnes > 0) { badge.textContent=newOnes; badge.classList.remove('hide') }
+    else badge.classList.add('hide')
+  } catch(e) {
+    riderState.allOrders = [
+      {orderId:'PP-2025-8821',customerName:'Rahul Sharma',phone:'9876543210',address:'45 Saharanpur Rd, Dehradun',items:[{name:'Pepperoni Feast',qty:1,price:379},{name:'Garlic Bread',qty:1,price:99}],total:577,status:'preparing'},
+      {orderId:'PP-2025-8822',customerName:'Priya Singh',phone:'9876543211',address:'12 Rajpur Rd, Dehradun',items:[{name:'Paneer Tikka',qty:2,price:299}],total:647,status:'received'},
+    ]
+  }
+  if (riderState.tab) switchTab(riderState.tab)
+}
+
+function switchTab(tab) {
+  riderState.tab = tab
+  document.querySelectorAll('.bn-item').forEach(b=>b.classList.remove('active'))
+  document.getElementById('bn-'+tab)?.classList.add('active')
+  const main = document.getElementById('main-content')
+  if (tab==='orders') main.innerHTML = renderOrders()
+  else if (tab==='active') main.innerHTML = renderActive()
+  else if (tab==='earnings') main.innerHTML = renderEarnings()
+  else if (tab==='profile') main.innerHTML = renderProfile()
+}
+
+function renderOrders() {
+  const pending = riderState.allOrders.filter(o=>o.status==='received'||o.status==='preparing')
+  return `
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+    <div style="font-size:17px;font-weight:800">Available Orders</div>
+    <button onclick="loadOrders()" style="background:var(--blue-light);color:var(--blue);border:none;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">🔄 Refresh</button>
+  </div>
+  ${!riderState.isOnline ? `<div style="background:var(--orange-light);border-radius:10px;padding:12px 14px;font-size:13px;color:var(--orange);font-weight:600;margin-bottom:14px;text-align:center">⚠️ Go Online to see and accept orders</div>` : ''}
+  ${pending.length === 0 ? `<div class="empty-state"><div class="ico">📭</div><h3>No orders right now</h3><p>Pull to refresh when new orders come in</p></div>` :
+  pending.map(o=>`
+  <div class="order-card">
+    <div class="order-header">
+      <div class="order-id">${o.orderId}</div>
+      <span class="order-status os-new">New Order</span>
+    </div>
+    <div class="order-customer">
+      <div class="customer-avatar">👤</div>
+      <div><div class="customer-name">${o.customerName}</div><div class="customer-addr">📍 ${o.address}</div></div>
+    </div>
+    <div class="order-items">🍕 ${(o.items||[]).map(i=>i.name+' ×'+i.qty).join(', ')}</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div class="order-amount">₹${o.total}</div>
+      <div style="font-size:12px;color:var(--mid)">~2.3 km away</div>
+    </div>
+    <div class="order-actions">
+      <button class="btn btn-call" onclick="callCustomer('${o.phone}')">📞 Call</button>
+      <button class="btn btn-accept" onclick="acceptOrder('${o.orderId}')">✅ Accept Order</button>
+    </div>
+  </div>`).join('')}`
+}
+
+function renderActive() {
+  const active = riderState.allOrders.find(o=>o.status==='otw') || riderState.activeOrder
+  if (!active) return `<div class="empty-state"><div class="ico">🛵</div><h3>No active delivery</h3><p>Accept an order to start delivering</p></div>`
+  return `
+  ${riderState.isOnline ? `<div class="gps-bar"><div class="gps-dot"></div><span>GPS Active — Your location is being shared</span></div>` : ''}
+  <div class="order-card">
+    <div class="order-header">
+      <div class="order-id">${active.orderId}</div>
+      <span class="order-status os-picked">Delivering</span>
+    </div>
+    <div class="order-customer">
+      <div class="customer-avatar">👤</div>
+      <div><div class="customer-name">${active.customerName}</div><div class="customer-addr">📍 ${active.address}</div></div>
+    </div>
+    <div class="order-items">🍕 ${(active.items||[]).map(i=>i.name+' ×'+i.qty).join(', ')}</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div class="order-amount">₹${active.total}</div>
+      <div style="font-size:12px;background:var(--orange-light);color:var(--orange);padding:4px 10px;border-radius:20px;font-weight:700">~10 mins</div>
+    </div>
+    <div class="order-actions" style="margin-bottom:10px">
+      <button class="btn btn-call" onclick="callCustomer('${active.phone}')">📞 Call Customer</button>
+      <button class="btn btn-nav" onclick="openNavigation('${encodeURIComponent(active.address)}')">🗺️ Navigate</button>
+    </div>
+    <button class="btn btn-delivered" onclick="markDelivered('${active.orderId}')">✅ Mark as Delivered</button>
+  </div>`
+}
+
+function renderEarnings() {
+  const e = riderState.rider?.earnings || {today:0,week:0,total:0}
+  const todayDeliveries = riderState.allOrders.filter(o=>o.status==='delivered').length
+  return `
+  <div class="earn-card">
+    <div class="earn-label">Today's Earnings</div>
+    <div class="earn-amount">₹${e.today}</div>
+    <div class="earn-row"><span>Deliveries today</span><span>${todayDeliveries}</span></div>
+    <div class="earn-row"><span>Per delivery avg</span><span>₹${todayDeliveries>0?Math.round(e.today/todayDeliveries):0}</span></div>
+  </div>
+  <div class="stats-row">
+    <div class="stat-box"><div class="sv">₹${e.week.toLocaleString()}</div><div class="sl">This Week</div></div>
+    <div class="stat-box"><div class="sv">₹${e.total.toLocaleString()}</div><div class="sl">All Time</div></div>
+    <div class="stat-box"><div class="sv">4.8★</div><div class="sl">My Rating</div></div>
+  </div>
+  <div class="card">
+    <div class="card-head"><h3>📅 Recent Deliveries</h3></div>
+    <div class="card-body">
+      ${riderState.allOrders.filter(o=>o.status==='delivered').slice(0,5).map(o=>`
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px">
+        <div><div style="font-weight:600">${o.orderId}</div><div style="font-size:11px;color:var(--mid)">${o.customerName}</div></div>
+        <div style="font-weight:700;color:var(--green)">₹${Math.round(o.total*0.1)}</div>
+      </div>`).join('') || '<div style="text-align:center;padding:20px;color:var(--mid)">No deliveries yet</div>'}
+    </div>
+  </div>`
+}
+
+function renderProfile() {
+  const rider = riderState.rider
+  return `
+  <div style="text-align:center;padding:20px 16px">
+    <div style="width:80px;height:80px;background:var(--red);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 12px">🛵</div>
+    <div style="font-size:20px;font-weight:800;margin-bottom:4px">${rider?.name||'Rider'}</div>
+    <div style="font-size:13px;color:var(--mid)">${rider?.phone} · ${rider?.area}</div>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)"><span style="color:var(--mid)">Rating</span><span style="font-weight:700;color:#B8860B">★ 4.8</span></div>
+      <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)"><span style="color:var(--mid)">Total Deliveries</span><span style="font-weight:700">${riderState.allOrders.filter(o=>o.status==='delivered').length}</span></div>
+      <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)"><span style="color:var(--mid)">Delivery Area</span><span style="font-weight:700">${rider?.area}</span></div>
+      <div style="display:flex;justify-content:space-between;padding:10px 0"><span style="color:var(--mid)">Status</span><span style="font-weight:700;color:${riderState.isOnline?'var(--green)':'var(--mid)'}">${riderState.isOnline?'🟢 Online':'🔴 Offline'}</span></div>
+    </div>
+  </div>
+  <button onclick="riderLogout()" style="width:100%;padding:13px;border-radius:12px;background:var(--red-light);color:var(--red);border:none;font-size:14px;font-weight:700;cursor:pointer;margin-top:8px">🚪 Sign Out</button>`
+}
+
+// ── ACTIONS ──
+async function acceptOrder(orderId) {
+  try {
+    await fetch(`${API}/api/orders/${orderId}/status`, {
+      method:'PATCH', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({status:'otw'})
+    })
+    const order = riderState.allOrders.find(o=>o.orderId===orderId)
+    if (order) { order.status='otw'; riderState.activeOrder=order }
+    showToast('Order accepted! 🛵 Go deliver!','✅')
+    loadOrders()
+    switchTab('active')
+  } catch(e) {
+    showToast('Could not accept order — check connection','❌')
+  }
+}
+
+async function markDelivered(orderId) {
+  if (!confirm('Mark this order as delivered?')) return
+  try {
+    await fetch(`${API}/api/orders/${orderId}/status`, {
+      method:'PATCH', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({status:'delivered'})
+    })
+    const order = riderState.allOrders.find(o=>o.orderId===orderId)
+    if (order) order.status='delivered'
+    riderState.activeOrder = null
+    showToast('Order delivered! Great job! 🎉','✅')
+    loadOrders()
+    switchTab('orders')
+  } catch(e) {
+    showToast('Could not update — check connection','❌')
+  }
+}
+
+function callCustomer(phone) { window.location.href = 'tel:+91'+phone }
+
+function openNavigation(address) {
+  window.open('https://maps.google.com/?q='+address,'_blank')
+}
+
+// ── GPS ──
+function startGPS() {
+  if (!navigator.geolocation) return
+  riderState.locationInterval = setInterval(() => {
+    navigator.geolocation.getCurrentPosition(pos => {
+      const activeOrder = riderState.allOrders.find(o=>o.status==='otw')
+      if (activeOrder) {
+        fetch(`${API}/api/rider-location`, {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({
+            orderId: activeOrder.orderId,
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+            riderName: riderState.rider?.name
+          })
+        }).catch(()=>{})
+      }
+    }, ()=>{})
+  }, 5000)
+}
+
+function stopGPS() {
+  if (riderState.locationInterval) clearInterval(riderState.locationInterval)
+}
+
+function riderLogout() {
+  stopGPS()
+  document.getElementById('rider-app').classList.add('hide')
+  document.getElementById('login-screen').classList.remove('hide')
+  document.getElementById('rider-pin').value = ''
+  riderState.isOnline = false
+  riderState.rider = null
+}
+
+function showToast(msg, ico='✅') {
+  const t = document.getElementById('toast')
+  t.innerHTML = ico + ' ' + msg
+  t.classList.add('show')
+  setTimeout(() => t.classList.remove('show'), 2800)
+}
+</script>
+</body>
+</html>
